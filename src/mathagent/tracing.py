@@ -49,7 +49,9 @@ def _build_langfuse_handler() -> BaseCallbackHandler:
     """Construct the LangFuse callback handler.
 
     LangFuse reads its credentials from LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY /
-    LANGFUSE_HOST env vars when the handler is instantiated with no arguments.
+    LANGFUSE_BASE_URL env vars when the handler is instantiated with no arguments.
+    (LANGFUSE_HOST is still accepted as a legacy fallback name in v4, but the
+    official UI and docs now use LANGFUSE_BASE_URL.)
 
     Import path note: this is `langfuse.langchain.CallbackHandler`, the LangFuse
     v3+ location. The legacy `langfuse.callback` module was removed in v3. If

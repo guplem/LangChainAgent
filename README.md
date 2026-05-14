@@ -139,7 +139,7 @@ No manual activation needed; `uv run` handles it. To activate anyway:
 
 The repo ships a `.env` file with public, non-secret defaults
 (`LANGCHAIN_TRACING_V2`, `LANGCHAIN_PROJECT`, `TRACING_BACKEND`,
-`LANGFUSE_HOST`). You do not need to edit it. Secrets live in a separate
+`LANGFUSE_BASE_URL`). You do not need to edit it. Secrets live in a separate
 `.env.local` file that is gitignored.
 
 Copy the secrets template:
@@ -164,7 +164,7 @@ Open `.env.local` and fill the keys for the backend you want to use:
   your project -> *Settings* -> *API Keys* -> *Create new API keys*. Paste
   the public and secret keys into `LANGFUSE_PUBLIC_KEY` and
   `LANGFUSE_SECRET_KEY`. If you use the US region or a self-hosted
-  instance, also override `LANGFUSE_HOST` here (the value in `.env.local`
+  instance, also override `LANGFUSE_BASE_URL` here (the value in `.env.local`
   wins over `.env`).
 
 You can leave LangFuse blank if you only want LangSmith.
