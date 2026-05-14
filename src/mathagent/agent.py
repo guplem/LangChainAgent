@@ -27,6 +27,7 @@ from __future__ import annotations
 from typing import Any
 
 from langchain.agents import create_agent
+from langgraph.checkpoint.memory import InMemorySaver
 
 from mathagent.chat_model import RuleBasedChatModel
 from mathagent.tools import ALL_TOOLS
@@ -40,5 +41,10 @@ def build_agent() -> Any:
     full message history, the same I/O shape as the graph path. We return
     `Any` because the precise generic type CompiledStateGraph[...] is verbose
     and would obscure the teaching value of this file.
+
+    Memory: an `InMemorySaver` checkpointer is attached so every `.invoke()`
+    call that shares a `configurable.thread_id` resumes the prior conversation.
+    Callers without a thread_id get the original single-turn behavior, but
+    LangGraph requires the key to exist; the REPL always passes one.
     """
-    return create_agent(RuleBasedChatModel(), tools=ALL_TOOLS)
+    return create_agent(RuleBasedChatModel(), tools=ALL_TOOLS, checkpointer=InMemorySaver())

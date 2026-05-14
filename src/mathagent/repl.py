@@ -7,10 +7,11 @@ callbacks so every question produces a trace.
 
 from __future__ import annotations
 
+import uuid
 from collections.abc import Callable
 from typing import Any
 
-from langchain_core.runnables import Runnable
+from langchain_core.runnables import Runnable, RunnableConfig
 
 from mathagent.agent import build_agent
 from mathagent.chain import build_chain
@@ -59,7 +60,12 @@ def run() -> None:
     mode = _ask_mode()
     runnable = _MODES[mode]()
     callbacks = list(get_callbacks())
-    print(f"\nReady ({mode} mode). Ask a math question. Type 'quit' to exit.\n")
+    # One conversation per REPL session. Agent and graph paths use this to
+    # resume prior turns via their InMemorySaver checkpointer. Chain ignores
+    # it. Type 'reset' to start a fresh conversation without restarting.
+    thread_id = uuid.uuid4().hex
+    print(f"\nReady ({mode} mode). Ask a math question. Type 'reset' to clear")
+    print("the conversation, 'quit' to exit.\n")
     # The try/finally guarantees flush_callbacks() runs on every exit path
     # (normal quit, Ctrl-C, exception). Without it, the LangFuse background
     # batcher can drop the last span when the REPL exits faster than its
@@ -73,11 +79,20 @@ def run() -> None:
                 return
             if not text:
                 continue
-            if text.lower() in {"quit", "exit"}:
+            lower = text.lower()
+            if lower in {"quit", "exit"}:
                 return
+            if lower == "reset":
+                thread_id = uuid.uuid4().hex
+                print("(conversation cleared)")
+                continue
             try:
                 payload = _prepare_input(mode, text)
-                result = runnable.invoke(payload, config={"callbacks": callbacks})
+                config: RunnableConfig = {
+                    "callbacks": callbacks,
+                    "configurable": {"thread_id": thread_id},
+                }
+                result = runnable.invoke(payload, config=config)
                 print(_format_output(mode, result))
             except Exception as e:
                 print(f"Error: {type(e).__name__}: {e}")

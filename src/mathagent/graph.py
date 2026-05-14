@@ -33,6 +33,7 @@ from collections.abc import Sequence
 from typing import Annotated, Any, TypedDict
 
 from langchain_core.messages import AIMessage, AnyMessage
+from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
@@ -70,10 +71,17 @@ def build_graph() -> Any:
     """Build the graph-path runnable.
 
     Returns a compiled state graph. Invoke it with:
-        graph.invoke({"messages": [("user", "add 2 and 3")]})
+        graph.invoke(
+            {"messages": [("user", "add 2 and 3")]},
+            config={"configurable": {"thread_id": "session-1"}},
+        )
 
     We return `Any` because the precise generic type (CompiledStateGraph[...])
     is verbose and would obscure the teaching value of this file.
+
+    Memory: an `InMemorySaver` checkpointer is attached so calls sharing a
+    `configurable.thread_id` resume the prior conversation. This matches the
+    agent path; see `agent.py` and ADR 0007.
     """
     tool_node = ToolNode(ALL_TOOLS)
 
@@ -83,4 +91,4 @@ def build_graph() -> Any:
     builder.add_edge(START, "model")
     builder.add_conditional_edges("model", _should_continue, {"tools": "tools", END: END})
     builder.add_edge("tools", "model")
-    return builder.compile()
+    return builder.compile(checkpointer=InMemorySaver())

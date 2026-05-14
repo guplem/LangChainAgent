@@ -121,6 +121,7 @@ Index:
 | [0004](adr/0004-tracing-langsmith-then-langfuse.md) | LangSmith now, LangFuse switchable later |
 | [0005](adr/0005-repl-entry-point.md) | REPL as the primary entry point |
 | [0006](adr/0006-pytest-and-tdd.md) | pytest with a TDD workflow |
+| [0007](adr/0007-multi-turn-memory-via-thread-id.md) | Multi-turn memory via LangGraph checkpointer + thread_id |
 
 Create a new ADR when a change introduces a new component, a new external dependency, or alters how an existing concept works (routing, tracing, state representation, public API). Do not create an ADR for routine bug fixes, refactors, or test additions.
 
