@@ -1,0 +1,72 @@
+[project]
+name = "mathagent"
+version = "0.1.0"
+description = "A reference LangChain agent that does math without using an LLM. Three routing paths (chain, agent, graph) demonstrate the core agent shapes, with LangSmith and optional LangFuse tracing."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "MIT" }
+authors = [{ name = "Guillem Poy", email = "guillem.poy@galtea.ai" }]
+
+dependencies = [
+    # LangChain ecosystem. We pin minor floors but allow patch upgrades.
+    # langchain-core has the primitives (Runnable, BaseChatModel, @tool, callbacks).
+    # langchain has AgentExecutor and create_tool_calling_agent (legacy agent loop).
+    # langgraph has create_react_agent (modern agent path).
+    # langsmith is the tracing client; LangChain auto-uses it when env vars are set.
+    "langchain-core>=0.3.0",
+    "langchain>=0.3.0",
+    "langgraph>=0.2.0",
+    "langsmith>=0.2.0",
+    # LangFuse is optional at runtime. We install it so the import in tracing.py
+    # works, but tracing.py only activates it when TRACING_BACKEND requests it.
+    "langfuse>=2.0.0",
+    # pydantic is a transitive dep of langchain-core but we use it directly in tool schemas.
+    "pydantic>=2.0.0",
+]
+
+[project.scripts]
+# Lets you also run `mathagent` if the venv is on PATH. Primary entry stays `python -m mathagent`.
+mathagent = "mathagent.__main__:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+    "ruff>=0.6.0",
+    "mypy>=1.10.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mathagent"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# E,F: pycodestyle + pyflakes. I: import order. UP: pyupgrade. B: bugbear. SIM: simplify.
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = []
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src", "tests"]
+# LangChain has some untyped attributes; relax just enough to keep strict mode usable.
+disallow_untyped_decorators = false
+warn_return_any = false
+
+[[tool.mypy.overrides]]
+# langfuse ships without type stubs at the time of writing. Treat as Any.
+module = "langfuse.*"
+ignore_missing_imports = true
