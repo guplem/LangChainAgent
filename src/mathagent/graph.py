@@ -1,9 +1,12 @@
-"""Graph path: a hand-built LangGraph state machine.
+"""Graph path: an explicit LangGraph state machine.
 
-This path exists purely for learning. `create_agent` in `agent.py` builds the
-same loop in one line; here we build it explicitly so you can see the nodes,
-the edges, the state schema, and the routing decision. Every concept that is
-hidden by `create_agent` is visible here.
+This path exists purely for learning. Everything in this file uses standard
+LangGraph primitives (`StateGraph`, `add_messages`, `ToolNode`, conditional
+edges) -- the same ones `create_agent` (in `agent.py`) uses internally. The
+difference is the abstraction level: `create_agent` is a one-line prebuilt
+that hides the topology; here we compose the same loop from primitives so
+you can see every node, every edge, and the state schema. Nothing is
+reinvented; it is just written at a lower level.
 
 The state of the graph is a message list. Two nodes update it:
 

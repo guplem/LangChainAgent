@@ -25,7 +25,7 @@ Write the umbrella question in one sentence. Share with the user and ask if it c
 Identify 3-5 focused angles. Each angle should be answerable by one research-agent in 5-10 minutes. Examples for a routing-related question:
 
 - Angle A: how `langchain.agents.create_agent` works internally
-- Angle B: how the hand-built graph compares to `create_agent`
+- Angle B: how the explicit graph compares to `create_agent`
 - Angle C: tracing differences across the three paths
 - Angle D: cost/performance implications
 

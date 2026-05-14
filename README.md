@@ -68,11 +68,13 @@ loop. This is the recommended pattern for new agents in LangChain 1.x.
 
 ### graph (`src/mathagent/graph.py`)
 
-A hand-built LangGraph `StateGraph` with explicit `model` and `tools` nodes,
-a state schema, and explicit conditional edges. Educational only: it builds
-the same loop `create_agent` builds for you, with everything visible. Use
-this when `create_agent`'s defaults are not enough (custom routing, multiple
-models, branches).
+An **explicit** LangGraph `StateGraph` with `model` and `tools` nodes, a
+state schema, and conditional edges. Same standard LangGraph primitives
+`create_agent` uses internally, but composed by hand so every node, edge,
+and routing decision is visible in source. Educational: it builds the same
+loop `create_agent` builds for you. Use this lower-level form when
+`create_agent`'s defaults are not enough (custom routing, multiple models,
+parallel branches).
 
 ## Tracing
 
@@ -144,7 +146,7 @@ MathAgent REPL
 Three modes, three LangChain shapes that share the same tools:
   chain  -> RunnableLambda composition. Deterministic, no loop.
   agent  -> create_agent (LangGraph under the hood). Modern agent path.
-  graph  -> Hand-built LangGraph state machine. Educational.
+  graph  -> Explicit LangGraph state machine. Educational.
 
 mode> agent
 
@@ -190,7 +192,7 @@ src/mathagent/
   chat_model.py      # RuleBasedChatModel: BaseChatModel subclass with no LLM
   chain.py           # chain path
   agent.py           # agent path (create_agent)
-  graph.py           # graph path (hand-built StateGraph)
+  graph.py           # graph path (explicit StateGraph)
   tracing.py         # TRACING_BACKEND -> callback handlers
 tests/               # one file per source module
 adr/                 # design decisions, see ADR index below

@@ -31,10 +31,11 @@ in 1.x. If you see those names in older tutorials, this is the replacement.
 
 ### 3. Custom graph (`graph.py`)
 
-A hand-built `StateGraph` with a `model` node, a `tools` node, a state schema,
-and explicit conditional edges. Builds the same loop that `create_agent` would
-generate, but exposes every component. Educational only -- for production use
-the agent path.
+An explicit `StateGraph` with a `model` node, a `tools` node, a state schema,
+and conditional edges. Uses the same standard LangGraph primitives as
+`create_agent` (`StateGraph`, `add_messages`, `ToolNode`), but composes them
+by hand so every component is visible. Educational: for production, use the
+agent path.
 
 ## Consequences
 

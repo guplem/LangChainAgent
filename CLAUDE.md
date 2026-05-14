@@ -60,7 +60,7 @@ src/mathagent/
   chat_model.py   # RuleBasedChatModel: BaseChatModel subclass that calls the parser
   chain.py        # Chain path (RunnableLambda)
   agent.py        # Agent path (langchain.agents.create_agent)
-  graph.py        # Graph path (hand-built StateGraph + ToolNode)
+  graph.py        # Graph path (explicit StateGraph + ToolNode)
   tracing.py      # TRACING_BACKEND env var -> list of callback handlers
 ```
 

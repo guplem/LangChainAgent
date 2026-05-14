@@ -29,7 +29,7 @@ def _ask_mode() -> str:
     print("Three modes, three LangChain shapes that share the same tools:")
     print("  chain  -> RunnableLambda composition. Deterministic, no loop.")
     print("  agent  -> langchain.agents.create_agent. Modern agent path.")
-    print("  graph  -> Hand-built LangGraph state machine. Educational.")
+    print("  graph  -> Explicit LangGraph state machine. Educational.")
     print()
     while True:
         choice = input("mode> ").strip().lower()
@@ -42,7 +42,7 @@ def _prepare_input(mode: str, text: str) -> Any:
     """Each path expects a different input shape. Convert here."""
     if mode == "chain":
         return text
-    # Both agent (create_agent) and graph (hand-built) take the same shape:
+    # Both agent (create_agent) and graph (explicit StateGraph) take the same shape:
     # a messages list, since both compile to a LangGraph state machine.
     return {"messages": [("user", text)]}
 
