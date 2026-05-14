@@ -18,9 +18,16 @@ which LangChain shape runs.
 
 ### 1. Chain (`chain.py`)
 
-A `RunnableLambda` that calls the parser and invokes the matching tool. No
-LLM, no message list, no loop. This is the "chain" pattern in LangChain
-terminology: deterministic composition of Runnables.
+An **LCEL pipeline**: two `RunnableLambda` steps composed with `|` as
+`parse | dispatch`. The result is a `RunnableSequence`, the canonical
+LangChain 1.x form of "a chain". No LLM, no message list, no loop -- just
+deterministic composition of Runnables.
+
+The earlier draft of this path wrapped a single `_route(text)` function in
+one `RunnableLambda`. That worked but obscured the canonical `|` idiom and
+made the "chain" label loose, since a single Runnable is not a chain by the
+strict 1.x definition. The LCEL form was chosen so the file teaches the
+single most common LangChain composition pattern.
 
 ### 2. Agent (`agent.py`)
 

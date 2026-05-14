@@ -27,6 +27,10 @@ If any of these are new, read this section before the code.
   `.invoke()`, `.batch()`, and `.stream()` is a Runnable. Tools, chat models,
   chains, agents, and graphs are all Runnables, which is why you can compose
   them.
+- **LCEL (LangChain Expression Language)**: composing Runnables with the
+  `|` operator, like Unix pipes. `a | b` builds a new Runnable that invokes
+  `a`, then feeds its output to `b`. The most common pattern in LangChain;
+  every tutorial uses `prompt | model | parser`. See `src/mathagent/chain.py`.
 - **Chat model**: a Runnable whose input is a list of messages and whose
   output is an `AIMessage`. In a real agent, this is the LLM. Here we
   substitute `RuleBasedChatModel`, see `src/mathagent/chat_model.py`.
@@ -52,9 +56,11 @@ around the tool call. The REPL asks you to pick a mode at start.
 
 ### chain (`src/mathagent/chain.py`)
 
-A `RunnableLambda` that calls the parser, looks up the tool, and invokes it.
-No agent loop, no messages. The simplest LangChain pattern. Use it when the
-control flow is fully deterministic and you do not need multi-step reasoning.
+An **LCEL pipeline**: two `RunnableLambda` steps composed with `|` as
+`parse | dispatch`. The result is a `RunnableSequence`, which is what
+LangChain 1.x calls "a chain". No agent loop, no messages, just
+deterministic Runnable composition. Each step produces its own span in the
+LangSmith trace.
 
 **Conversation: single-turn only.** A chain is a pure function. It has no
 state and no notion of "previous turn". Use the agent or graph path if you

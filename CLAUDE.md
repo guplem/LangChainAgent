@@ -73,7 +73,7 @@ The three paths share:
 
 What differs per path:
 
-- **chain**: calls the parser directly inside a `RunnableLambda`. No messages, no loop.
+- **chain**: an LCEL pipeline `parse | dispatch` (two named `RunnableLambda` steps composed with `|`). No messages, no loop. Each step is its own span in the LangSmith trace.
 - **agent**: passes the rule-based chat model to `create_agent`. Returns a compiled state graph that runs the full tool-calling loop. I/O is `{"messages": [...]}`.
 - **graph**: builds a `StateGraph` with `model` and `tools` nodes, conditional edges, and a state schema using `add_messages`. Same I/O shape as the agent path. Educational: it exposes what `create_agent` builds for you.
 

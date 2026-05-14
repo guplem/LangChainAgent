@@ -1,19 +1,26 @@
-"""Chain path: deterministic Runnable composition.
+"""Chain path: an LCEL pipeline composed with `|`.
 
-A "chain" in LangChain is a Runnable that does a fixed sequence of steps. There
-is no LLM in the loop and no decision-making at run time besides what the code
-explicitly says.
+LCEL is the **LangChain Expression Language**: a way to compose Runnables
+with the `|` operator, borrowed from Unix pipes. `a | b` produces a new
+Runnable (a `RunnableSequence`) that first invokes `a`, then feeds its
+output into `b`. This is the canonical "chain" pattern in LangChain 1.x;
+every real tutorial uses it (`prompt | model | parser` is the classic
+shape).
 
 Shape of this chain:
 
     input: str
-      -> parse_math_request   (picks tool name and args)
-      -> route_to_tool        (looks up the @tool and calls .invoke(args))
+      -> parse     (RunnableLambda wrapping parse_math_request)
+                   str -> (tool_name, args)
+      -> dispatch  (RunnableLambda wrapping _dispatch)
+                   (tool_name, args) -> float
       -> output: float
 
-Compare this to `agent.py` and `graph.py` which wrap the same call in an agent
-loop. The chain path is the simplest and cheapest, but it has no scratchpad,
-no multi-step reasoning, and no "thinking" step the LLM would normally do.
+Each step is its own named Runnable, so each one produces a span in the
+LangSmith trace. Compare this to `agent.py` and `graph.py` which wrap the
+same call in an agent loop with multiple message turns. The chain path is
+the simplest and cheapest, but it has no scratchpad, no multi-step
+reasoning, and no "thinking" step the LLM would normally do.
 
 Single-turn only. A chain is a pure function with no message list and no
 state primitive, so follow-ups like "add 2" after a previous "add 3 and 5"
@@ -31,21 +38,19 @@ from mathagent.parser import parse_math_request
 from mathagent.tools import TOOLS_BY_NAME
 
 
-def _route(text: str) -> float:
-    """Parse the input, look up the tool, invoke it."""
-    tool_name, args = parse_math_request(text)
-    tool = TOOLS_BY_NAME[tool_name]
-    # tool.invoke is the standard Runnable interface for any @tool. It returns
-    # the raw function return value (float here) when no LangChain wrapping is needed.
-    result = tool.invoke(args)
-    return float(result)
+def _dispatch(parsed: tuple[str, dict[str, float]]) -> float:
+    """Run the tool named by the parser with the parsed arguments."""
+    tool_name, args = parsed
+    return float(TOOLS_BY_NAME[tool_name].invoke(args))
 
 
 def build_chain() -> Runnable[str, float]:
-    """Build the chain-path runnable.
+    """Build the chain-path runnable as an LCEL pipeline.
 
-    Wrapping `_route` in RunnableLambda is what turns a plain function into a
-    LangChain Runnable, so it gets `.invoke`, `.batch`, `.stream`, callbacks,
-    and tracing for free.
+    Returns `parse | dispatch`, a `RunnableSequence` of two named
+    `RunnableLambda` steps. Each step appears as its own span in the
+    LangSmith trace.
     """
-    return RunnableLambda(_route, name="MathChain")
+    parse = RunnableLambda(parse_math_request, name="parse")
+    dispatch = RunnableLambda(_dispatch, name="dispatch")
+    return parse | dispatch
