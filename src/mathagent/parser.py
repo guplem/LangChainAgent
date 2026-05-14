@@ -52,7 +52,11 @@ class ParseError(ValueError):
     """Raised when the parser cannot extract a tool name and two operands."""
 
 
-def parse_math_request(text: str) -> tuple[str, dict[str, float]]:
+def parse_math_request(
+    text: str,
+    *,
+    prior_answer: float | None = None,
+) -> tuple[str, dict[str, float]]:
     """Parse a free-form math question.
 
     Returns (tool_name, args) where args is the dict passed to the tool's
@@ -66,8 +70,17 @@ def parse_math_request(text: str) -> tuple[str, dict[str, float]]:
         >>> parse_math_request("6 * 9")
         ('multiply', {'a': 6.0, 'b': 9.0})
 
-    Raises ParseError if no operation keyword is found or if fewer than two
-    numbers are present.
+    Multi-turn follow-ups: when `prior_answer` is given and `text` contains
+    only one number, the prior answer is used as the first operand and the
+    new number as the second. This is how the rule-based chat model lets a
+    user say "add 2" after "add 3 and 5" returned 8 -- and have it mean
+    "add 2 to 8".
+
+        >>> parse_math_request("add 2", prior_answer=8.0)
+        ('add', {'a': 8.0, 'b': 2.0})
+
+    Raises ParseError if no operation keyword is found, or if there are
+    fewer than two numbers AND no prior_answer to fall back on.
     """
     lowered = text.lower()
     tool_name: str | None = None
@@ -82,7 +95,11 @@ def parse_math_request(text: str) -> tuple[str, dict[str, float]]:
         )
 
     numbers = [float(m) for m in _NUMBER_RE.findall(text)]
-    if len(numbers) < 2:
-        raise ParseError(f"Need two numbers in {text!r}, found {len(numbers)}.")
-
-    return tool_name, {"a": numbers[0], "b": numbers[1]}
+    if len(numbers) >= 2:
+        return tool_name, {"a": numbers[0], "b": numbers[1]}
+    if len(numbers) == 1 and prior_answer is not None:
+        return tool_name, {"a": prior_answer, "b": numbers[0]}
+    raise ParseError(
+        f"Need two numbers in {text!r} (or one number plus a prior answer), "
+        f"found {len(numbers)}."
+    )

@@ -43,3 +43,17 @@ def test_agent_persists_message_history_within_thread() -> None:
     assert len(r2["messages"]) > len(r1["messages"]), (
         "second turn should include first turn's history"
     )
+
+
+def test_agent_multi_turn_follow_up_uses_prior_answer() -> None:
+    # "add 3 and 5" -> 8. "add 2" should then become 8 + 2 = 10, because the
+    # chat model finds the prior final answer in the message history and
+    # passes it as the missing first operand.
+    agent = build_agent()
+    config = {"configurable": {"thread_id": "followup-test"}}
+
+    r1 = agent.invoke({"messages": [("user", "add 3 and 5")]}, config=config)
+    assert "8" in str(r1["messages"][-1].content)
+
+    r2 = agent.invoke({"messages": [("user", "add 2")]}, config=config)
+    assert "10" in str(r2["messages"][-1].content)

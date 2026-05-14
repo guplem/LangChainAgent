@@ -30,3 +30,23 @@ def test_raises_when_no_operation_keyword() -> None:
 def test_raises_when_fewer_than_two_numbers() -> None:
     with pytest.raises(ParseError, match="two numbers"):
         parse_math_request("add 5")
+
+
+@pytest.mark.parametrize(
+    ("text", "prior", "expected"),
+    [
+        ("add 2", 8.0, ("add", {"a": 8.0, "b": 2.0})),
+        ("subtract 3", 10.0, ("subtract", {"a": 10.0, "b": 3.0})),
+        ("times 4", 6.0, ("multiply", {"a": 6.0, "b": 4.0})),
+        ("divided by 2", 20.0, ("divide", {"a": 20.0, "b": 2.0})),
+    ],
+)
+def test_one_number_input_uses_prior_answer(
+    text: str, prior: float, expected: tuple[str, dict[str, float]]
+) -> None:
+    assert parse_math_request(text, prior_answer=prior) == expected
+
+
+def test_one_number_without_prior_still_raises() -> None:
+    with pytest.raises(ParseError, match="prior answer"):
+        parse_math_request("add 5", prior_answer=None)

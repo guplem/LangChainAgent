@@ -69,9 +69,16 @@ class RuleBasedChatModel(BaseChatModel):
             answer = AIMessage(content=str(last.content))
             return ChatResult(generations=[ChatGeneration(message=answer)])
 
-        # First turn: a human asked something. Parse and emit a tool call.
+        # A human asked something. Parse and emit a tool call.
+        # If this is a follow-up turn (the message list has prior content),
+        # find the last final-answer AIMessage and hand its numeric value to
+        # the parser, so a short input like "add 2" can resolve against the
+        # previous result. _find_prior_answer returns None when there is no
+        # such message, which makes the parser behave exactly like the
+        # single-turn version.
         text = last.content if isinstance(last.content, str) else str(last.content)
-        tool_name, args = parse_math_request(text)
+        prior_answer = _find_prior_answer(messages[:-1])
+        tool_name, args = parse_math_request(text, prior_answer=prior_answer)
         ai = AIMessage(
             content="",
             tool_calls=[
@@ -84,3 +91,27 @@ class RuleBasedChatModel(BaseChatModel):
             ],
         )
         return ChatResult(generations=[ChatGeneration(message=ai)])
+
+
+def _find_prior_answer(messages: list[BaseMessage]) -> float | None:
+    """Return the most recent final-answer numeric value from the history.
+
+    A "final-answer" AIMessage is one with non-empty content and no tool_calls
+    (tool-calling AIMessages have empty content). We walk the history from
+    newest to oldest and parse the first such message as a float. If parsing
+    fails (a future final answer might be a string error message), we skip
+    it and keep looking further back.
+    """
+    for msg in reversed(messages):
+        if not isinstance(msg, AIMessage):
+            continue
+        if msg.tool_calls:
+            continue
+        text = str(msg.content).strip()
+        if not text:
+            continue
+        try:
+            return float(text)
+        except ValueError:
+            continue
+    return None
