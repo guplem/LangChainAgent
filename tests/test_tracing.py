@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from mathagent.tracing import TracingConfigError, flush_callbacks, get_callbacks
@@ -39,3 +41,52 @@ def test_flush_callbacks_is_noop_when_no_langfuse_handler() -> None:
         pass
 
     flush_callbacks([_Dummy()])
+
+
+def test_langsmith_pops_tracing_v2_when_no_api_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # User wants LangSmith and turned on LANGCHAIN_TRACING_V2 but never filled
+    # the API key. get_callbacks should pop the V2 flag so the LangSmith client
+    # does not try to upload (and 401 noisily) on every call.
+    monkeypatch.setenv("TRACING_BACKEND", "langsmith")
+    monkeypatch.setenv("LANGCHAIN_TRACING_V2", "true")
+    monkeypatch.delenv("LANGCHAIN_API_KEY", raising=False)
+
+    assert list(get_callbacks()) == []
+    assert "LANGCHAIN_TRACING_V2" not in os.environ
+
+
+def test_langfuse_skipped_when_keys_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TRACING_BACKEND", "langfuse")
+    monkeypatch.delenv("LANGFUSE_PUBLIC_KEY", raising=False)
+    monkeypatch.delenv("LANGFUSE_SECRET_KEY", raising=False)
+
+    assert list(get_callbacks()) == []
+
+
+def test_langfuse_handler_built_when_keys_present(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from langfuse.langchain import CallbackHandler as LangFuseHandler
+
+    monkeypatch.setenv("TRACING_BACKEND", "langfuse")
+    monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-test")
+    monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-test")
+
+    callbacks = list(get_callbacks())
+    assert len(callbacks) == 1
+    assert isinstance(callbacks[0], LangFuseHandler)
+
+
+def test_both_with_no_keys_returns_empty_and_disables_langsmith(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("TRACING_BACKEND", "both")
+    monkeypatch.setenv("LANGCHAIN_TRACING_V2", "true")
+    monkeypatch.delenv("LANGCHAIN_API_KEY", raising=False)
+    monkeypatch.delenv("LANGFUSE_PUBLIC_KEY", raising=False)
+    monkeypatch.delenv("LANGFUSE_SECRET_KEY", raising=False)
+
+    assert list(get_callbacks()) == []
+    assert "LANGCHAIN_TRACING_V2" not in os.environ

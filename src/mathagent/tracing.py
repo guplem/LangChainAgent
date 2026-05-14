@@ -19,11 +19,18 @@ Backend values:
                          migrating from one backend to the other.
   - none               : empty list. Also unset LANGCHAIN_TRACING_V2 if you want
                          no traces at all.
+
+Graceful degradation: when a backend is requested but its keys are missing,
+`get_callbacks()` quietly disables that backend (popping LANGCHAIN_TRACING_V2
+to stop LangSmith from emitting 401 errors per call, or skipping the LangFuse
+handler so the SDK does not log its own "client disabled" warning) and prints
+one line to stderr explaining what happened. The agent always runs.
 """
 
 from __future__ import annotations
 
 import os
+import sys
 from collections.abc import Sequence
 
 from langchain_core.callbacks.base import BaseCallbackHandler
@@ -34,15 +41,44 @@ class TracingConfigError(RuntimeError):
 
 
 def get_callbacks() -> Sequence[BaseCallbackHandler]:
-    """Return the callback handlers for the current TRACING_BACKEND value."""
+    """Return the callback handlers for the current TRACING_BACKEND value.
+
+    Side effect: when `LANGCHAIN_API_KEY` is missing and `langsmith` or `both`
+    is requested, `LANGCHAIN_TRACING_V2` is popped from `os.environ` so the
+    LangSmith client does not attempt uploads it cannot authenticate. A
+    one-line notice goes to stderr in that case, and again if LangFuse keys
+    are missing.
+    """
     backend = os.environ.get("TRACING_BACKEND", "langsmith").lower()
-    if backend in ("langsmith", "none"):
-        return []
+    if backend not in ("langsmith", "langfuse", "both", "none"):
+        raise TracingConfigError(
+            f"Unknown TRACING_BACKEND={backend!r}. "
+            "Expected one of: langsmith, langfuse, both, none."
+        )
+
+    callbacks: list[BaseCallbackHandler] = []
+
+    if backend in ("langsmith", "both") and not os.environ.get("LANGCHAIN_API_KEY"):
+        # Disable the auto-registered LangSmith tracer; with no key it 401s on every call.
+        os.environ.pop("LANGCHAIN_TRACING_V2", None)
+        print(
+            "[tracing] LANGCHAIN_API_KEY not set; LangSmith tracing disabled.",
+            file=sys.stderr,
+        )
+
     if backend in ("langfuse", "both"):
-        return [_build_langfuse_handler()]
-    raise TracingConfigError(
-        f"Unknown TRACING_BACKEND={backend!r}. Expected one of: langsmith, langfuse, both, none."
-    )
+        if os.environ.get("LANGFUSE_PUBLIC_KEY") and os.environ.get(
+            "LANGFUSE_SECRET_KEY"
+        ):
+            callbacks.append(_build_langfuse_handler())
+        else:
+            print(
+                "[tracing] LANGFUSE_PUBLIC_KEY/SECRET_KEY not set; "
+                "LangFuse tracing disabled.",
+                file=sys.stderr,
+            )
+
+    return callbacks
 
 
 def _build_langfuse_handler() -> BaseCallbackHandler:
