@@ -175,50 +175,30 @@ Open `.env.local` and fill the keys for the backend you want to use:
 
 You can leave LangFuse blank if you only want LangSmith.
 
-### 4. Load both env files into your shell
-
-The REPL reads `os.environ` directly; nothing auto-loads `.env` files. Run
-this in the **same terminal session** that you will use to start the REPL.
-Source `.env` first (defaults), then `.env.local` (your secrets, which
-override anything in `.env` when names collide):
-
-**macOS / Linux (bash, zsh):**
-```bash
-set -a && source .env && source .env.local && set +a
-```
-
-**Windows (PowerShell):**
-```powershell
-Get-ChildItem .env, .env.local | ForEach-Object {
-  Get-Content $_ | ForEach-Object {
-    if ($_ -match '^\s*([^#=]+)=(.*)$') { Set-Item "env:$($matches[1].Trim())" $matches[2].Trim() }
-  }
-}
-```
-
-Verify the key was loaded:
-
-**macOS / Linux:**
-```bash
-echo $LANGCHAIN_API_KEY
-```
-
-**Windows (PowerShell):**
-```powershell
-echo $env:LANGCHAIN_API_KEY
-```
-
-You should see your key printed. A blank line means the load step did not
-run in this terminal.
-
-### 5. Run the REPL
+### 4. Run the REPL
 
 ```bash
 uv run python -m mathagent
 ```
 
+The entry point auto-loads `.env` and then `.env.local` via python-dotenv
+before the REPL starts. You do not need to source the files manually.
+Precedence is **shell exports > `.env.local` > `.env`**, so anything you
+export in the terminal overrides the files.
+
 You will be asked for a mode, then prompted for math questions. Try the same
 question in each mode and compare traces in the LangSmith UI.
+
+> If you start the REPL and see `[tracing] ... disabled` lines on stderr,
+> the key for that backend is missing in the loaded environment. Check that
+> `.env.local` exists and contains the keys you expect.
+
+> For one-off commands that do not go through the entry point (`uv run
+> python -c "..."`, scripts, notebooks), you can source the files manually:
+>
+> **bash/zsh:** `set -a && source .env && source .env.local && set +a`
+>
+> **PowerShell:** `Get-Content .env, .env.local | ForEach-Object { if ($_ -match '^\s*([^#=]+)=(.*)$') { Set-Item "env:$($matches[1].Trim())" $matches[2].Trim() } }`
 
 Example session:
 

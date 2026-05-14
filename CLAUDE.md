@@ -109,6 +109,8 @@ When you add a tool, write `test_tools.py::test_<name>` first. When you add a ro
 
 **Tests disable tracing globally.** Adding a test that needs tracing should override the `conftest.py` fixture explicitly and document why in the test docstring.
 
+**`__main__.py` auto-loads `.env` and `.env.local`; library imports do not.** Running `python -m mathagent` or the `mathagent` console script calls `python-dotenv.load_dotenv` on `.env.local` then `.env` before the REPL starts. Precedence: shell exports > `.env.local` > `.env`. Importing `mathagent` from a notebook, a script, or a test does NOT auto-load anything, so `os.environ` stays as the caller left it. This is why `tests/conftest.py` does not need to defend against accidental file loading.
+
 **Add a new tool:** the `/add-tool` slash command automates this. Manually: define `@tool def newop(...)` in `tools.py`, add it to `ALL_TOOLS`, teach the parser its keywords, then add tests in `tests/test_tools.py` and `tests/test_parser.py`. The chain, agent, and graph paths pick up the new tool automatically because they pull from `ALL_TOOLS` / `TOOLS_BY_NAME`.
 
 ## Architecture Decision Records (ADRs)
