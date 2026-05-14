@@ -23,7 +23,8 @@ to every `.invoke()` call:
 
 - `langsmith` (default): returns `[]`. LangChain auto-registers the LangSmith
   tracer from `LANGCHAIN_TRACING_V2`.
-- `langfuse`: returns `[langfuse.callback.CallbackHandler()]`.
+- `langfuse`: returns `[langfuse.langchain.CallbackHandler()]`. (The legacy
+  `langfuse.callback` import path was removed in LangFuse v3.)
 - `both`: returns the LangFuse handler on top of LangSmith. Useful for
   comparing the two during migration.
 - `none`: returns `[]` and the caller is expected to also unset

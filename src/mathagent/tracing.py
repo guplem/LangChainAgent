@@ -50,9 +50,14 @@ def _build_langfuse_handler() -> BaseCallbackHandler:
 
     LangFuse reads its credentials from LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY /
     LANGFUSE_HOST env vars when the handler is instantiated with no arguments.
+
+    Import path note: this is `langfuse.langchain.CallbackHandler`, the LangFuse
+    v3+ location. The legacy `langfuse.callback` module was removed in v3. If
+    you see older tutorials importing from `langfuse.callback`, that path no
+    longer exists on the installed version.
     """
     try:
-        from langfuse.callback import CallbackHandler
+        from langfuse.langchain import CallbackHandler
     except ImportError as e:
         raise TracingConfigError(
             "langfuse is required when TRACING_BACKEND is 'langfuse' or 'both' "
