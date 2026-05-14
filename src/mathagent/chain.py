@@ -14,6 +14,13 @@ Shape of this chain:
 Compare this to `agent.py` and `graph.py` which wrap the same call in an agent
 loop. The chain path is the simplest and cheapest, but it has no scratchpad,
 no multi-step reasoning, and no "thinking" step the LLM would normally do.
+
+Single-turn only. A chain is a pure function with no message list and no
+state primitive, so follow-ups like "add 2" after a previous "add 3 and 5"
+do not work here -- the parser would reject the lone "2" because the chain
+has no way to know about the prior answer. If you need conversation memory,
+use the agent or graph path (both compile to a LangGraph state machine
+with an InMemorySaver checkpointer keyed by thread_id; see ADR 0007).
 """
 
 from __future__ import annotations

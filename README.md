@@ -56,11 +56,20 @@ A `RunnableLambda` that calls the parser, looks up the tool, and invokes it.
 No agent loop, no messages. The simplest LangChain pattern. Use it when the
 control flow is fully deterministic and you do not need multi-step reasoning.
 
+**Conversation: single-turn only.** A chain is a pure function. It has no
+state and no notion of "previous turn". Use the agent or graph path if you
+want follow-ups.
+
 ### agent (`src/mathagent/agent.py`)
 
 `langchain.agents.create_agent`, the modern one-liner. Wraps the rule-based
 chat model and the tools into a compiled state graph that runs the full agent
 loop. This is the recommended pattern for new agents in LangChain 1.x.
+
+**Conversation: multi-turn.** Calls sharing a `configurable.thread_id`
+resume the prior conversation (via an `InMemorySaver` checkpointer). With
+the context-aware parser, follow-ups like `"add 2"` after `"add 3 and 5 -> 8"`
+become `8 + 2 = 10`. See ADR 0007.
 
 *History note:* tutorials from 2023-2024 use `AgentExecutor` and
 `create_tool_calling_agent`. Those names were removed in LangChain 1.x.
@@ -75,6 +84,9 @@ and routing decision is visible in source. Educational: it builds the same
 loop `create_agent` builds for you. Use this lower-level form when
 `create_agent`'s defaults are not enough (custom routing, multiple models,
 parallel branches).
+
+**Conversation: multi-turn.** Same memory model as the agent path: a
+`thread_id` in the config keys into an `InMemorySaver` checkpointer.
 
 ## Tracing
 

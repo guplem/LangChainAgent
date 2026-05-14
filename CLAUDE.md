@@ -101,6 +101,10 @@ When you add a tool, write `test_tools.py::test_<name>` first. When you add a ro
 
 **Agent and graph share I/O shape; chain does not.** Both `build_agent()` and `build_graph()` accept `{"messages": [("user", "...")]}` and return `{"messages": [...]}`. `build_chain()` accepts a plain string and returns a float. The REPL handles this dispatch in `_prepare_input` and `_format_output`.
 
+**Agent and graph require a `configurable.thread_id`; chain ignores it.** Both compile with an `InMemorySaver` checkpointer (see ADR 0007), so every `.invoke()` must include `config={"configurable": {"thread_id": "<id>"}}`. The REPL generates one `uuid4().hex` per session and threads it through every call; tests pass a fixed string. Reusing a `thread_id` resumes that conversation; a new `thread_id` starts a fresh one. The REPL `reset` command regenerates the id without restarting the process.
+
+**Multi-turn follow-ups depend on the parser, not just the checkpointer.** Memory wiring (ADR 0007) lets LangGraph reload the message list, but the rule-based parser is what turns `"add 2"` into `8 + 2 = 10` by reading the prior final answer. The chain path is single-turn by design and its docstring states this explicitly; do not bolt history onto chains.
+
 **Tracing handlers are passed per-call, not registered globally.** Every `.invoke()` call in the REPL passes `config={"callbacks": get_callbacks()}`. LangSmith is the exception: it registers its tracer globally via `LANGCHAIN_TRACING_V2=true` and does not need an explicit handler. See ADR 0004.
 
 **Tests disable tracing globally.** Adding a test that needs tracing should override the `conftest.py` fixture explicitly and document why in the test docstring.
