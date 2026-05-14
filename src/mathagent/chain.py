@@ -47,10 +47,11 @@ def _dispatch(parsed: tuple[str, dict[str, float]]) -> float:
 def build_chain() -> Runnable[str, float]:
     """Build the chain-path runnable as an LCEL pipeline.
 
-    Returns `parse | dispatch`, a `RunnableSequence` of two named
-    `RunnableLambda` steps. Each step appears as its own span in the
-    LangSmith trace.
+    Returns `parse | dispatch` wrapped with a friendly `run_name` so the
+    composed chain shows up in LangSmith / LangFuse as "MathChain" rather
+    than the default "RunnableSequence". Each child step ("parse",
+    "dispatch") still appears as its own span underneath.
     """
     parse = RunnableLambda(parse_math_request, name="parse")
     dispatch = RunnableLambda(_dispatch, name="dispatch")
-    return parse | dispatch
+    return (parse | dispatch).with_config(run_name="MathChain")
