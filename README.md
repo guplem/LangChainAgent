@@ -298,7 +298,3 @@ Check that `LANGCHAIN_TRACING_V2=true` is set in the same shell that runs
 
 **`langfuse` is not installed.**
 Run `uv sync` again. langfuse is a runtime dependency in `pyproject.toml`.
-
-## License
-
-MIT.
