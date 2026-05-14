@@ -131,6 +131,24 @@ uv sync
 > The first run downloads LangChain, LangGraph, LangSmith, LangFuse and dev
 > tools (pytest, ruff, mypy) into a local `.venv` directory.
 
+**You do not need to activate the venv.** Every command in this README uses
+`uv run ...`, which transparently executes inside `.venv`. If you prefer to
+activate it explicitly (so you can call `python`, `pytest`, etc. without the
+`uv run` prefix), do it once per shell:
+
+**macOS / Linux (bash, zsh):**
+```bash
+source .venv/bin/activate
+```
+
+**Windows (PowerShell):**
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+> To deactivate later, run `deactivate`. Your terminal prompt will show
+> `(.venv)` when the environment is active.
+
 ### 3. Fill in your secret keys
 
 The repo ships a `.env` file with public, non-secret defaults
