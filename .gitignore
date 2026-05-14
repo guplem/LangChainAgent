@@ -148,7 +148,11 @@ activemq-data/
 *.sage.py
 
 # Environments
-.env
+# .env is committed (public, non-secret defaults). Secrets live in .env.local
+# and .env.*.local, which are gitignored. See .env.local.example for the template.
+.env.local
+.env.*.local
+.env.secrets
 .envrc
 .venv
 env/

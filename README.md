@@ -119,49 +119,58 @@ uv sync
 > The first run downloads LangChain, LangGraph, LangSmith, LangFuse and dev
 > tools (pytest, ruff, mypy) into a local `.venv` directory.
 
-### 3. Fill in your env vars
+### 3. Fill in your secret keys
 
-Copy the template:
+The repo ships a `.env` file with public, non-secret defaults
+(`LANGCHAIN_TRACING_V2`, `LANGCHAIN_PROJECT`, `TRACING_BACKEND`,
+`LANGFUSE_HOST`). You do not need to edit it. Secrets live in a separate
+`.env.local` file that is gitignored.
+
+Copy the secrets template:
 
 **macOS / Linux (bash, zsh):**
 ```bash
-cp .env.example .env
+cp .env.local.example .env.local
 ```
 
 **Windows (PowerShell):**
 ```powershell
-Copy-Item .env.example .env
+Copy-Item .env.local.example .env.local
 ```
 
-Open `.env` and fill the keys for the backend you want to use:
+Open `.env.local` and fill the keys for the backend you want to use:
 
 - **LangSmith** (the default backend). Get a key at
   <https://smith.langchain.com/> -> *Settings* -> *API Keys* -> *Create API
-  Key*. Paste it into `LANGCHAIN_API_KEY`. Leave `LANGCHAIN_TRACING_V2=true`
-  and `LANGCHAIN_PROJECT=mathagent` as they are.
-- **LangFuse** (only if you set `TRACING_BACKEND=langfuse` or `both`). Sign
-  up at <https://cloud.langfuse.com/> (or self-host), open your project ->
-  *Settings* -> *API Keys* -> *Create new API keys*. Paste the public and
-  secret keys into `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY`. Adjust
-  `LANGFUSE_HOST` if you use the US region or a self-hosted instance.
+  Key*. Paste it into `LANGCHAIN_API_KEY`.
+- **LangFuse** (only if you set `TRACING_BACKEND=langfuse` or `both` in
+  `.env`). Sign up at <https://cloud.langfuse.com/> (or self-host), open
+  your project -> *Settings* -> *API Keys* -> *Create new API keys*. Paste
+  the public and secret keys into `LANGFUSE_PUBLIC_KEY` and
+  `LANGFUSE_SECRET_KEY`. If you use the US region or a self-hosted
+  instance, also override `LANGFUSE_HOST` here (the value in `.env.local`
+  wins over `.env`).
 
 You can leave LangFuse blank if you only want LangSmith.
 
-### 4. Load the env vars into your shell
+### 4. Load both env files into your shell
 
-The REPL reads `os.environ` directly, so the `.env` file is not auto-loaded.
-Run this in the **same terminal session** that you will use to start the
-REPL:
+The REPL reads `os.environ` directly; nothing auto-loads `.env` files. Run
+this in the **same terminal session** that you will use to start the REPL.
+Source `.env` first (defaults), then `.env.local` (your secrets, which
+override anything in `.env` when names collide):
 
 **macOS / Linux (bash, zsh):**
 ```bash
-set -a && source .env && set +a
+set -a && source .env && source .env.local && set +a
 ```
 
 **Windows (PowerShell):**
 ```powershell
-Get-Content .env | ForEach-Object {
-  if ($_ -match '^\s*([^#=]+)=(.*)$') { Set-Item "env:$($matches[1].Trim())" $matches[2].Trim() }
+Get-ChildItem .env, .env.local | ForEach-Object {
+  Get-Content $_ | ForEach-Object {
+    if ($_ -match '^\s*([^#=]+)=(.*)$') { Set-Item "env:$($matches[1].Trim())" $matches[2].Trim() }
+  }
 }
 ```
 
@@ -177,8 +186,8 @@ echo $LANGCHAIN_API_KEY
 echo $env:LANGCHAIN_API_KEY
 ```
 
-You should see your key printed. If you see a blank line, the load step did
-not run in this terminal.
+You should see your key printed. A blank line means the load step did not
+run in this terminal.
 
 ### 5. Run the REPL
 
