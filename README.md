@@ -119,11 +119,39 @@ uv sync
 > The first run downloads LangChain, LangGraph, LangSmith, LangFuse and dev
 > tools (pytest, ruff, mypy) into a local `.venv` directory.
 
-### 3. Set environment variables
+### 3. Fill in your env vars
 
-Copy `.env.example` to `.env` and fill in your LangSmith key. The REPL reads
-`os.environ` directly, so the file is not auto-loaded. Source it before
-running:
+Copy the template:
+
+**macOS / Linux (bash, zsh):**
+```bash
+cp .env.example .env
+```
+
+**Windows (PowerShell):**
+```powershell
+Copy-Item .env.example .env
+```
+
+Open `.env` and fill the keys for the backend you want to use:
+
+- **LangSmith** (the default backend). Get a key at
+  <https://smith.langchain.com/> -> *Settings* -> *API Keys* -> *Create API
+  Key*. Paste it into `LANGCHAIN_API_KEY`. Leave `LANGCHAIN_TRACING_V2=true`
+  and `LANGCHAIN_PROJECT=mathagent` as they are.
+- **LangFuse** (only if you set `TRACING_BACKEND=langfuse` or `both`). Sign
+  up at <https://cloud.langfuse.com/> (or self-host), open your project ->
+  *Settings* -> *API Keys* -> *Create new API keys*. Paste the public and
+  secret keys into `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY`. Adjust
+  `LANGFUSE_HOST` if you use the US region or a self-hosted instance.
+
+You can leave LangFuse blank if you only want LangSmith.
+
+### 4. Load the env vars into your shell
+
+The REPL reads `os.environ` directly, so the `.env` file is not auto-loaded.
+Run this in the **same terminal session** that you will use to start the
+REPL:
 
 **macOS / Linux (bash, zsh):**
 ```bash
@@ -137,10 +165,22 @@ Get-Content .env | ForEach-Object {
 }
 ```
 
-> To verify the key is set, run `echo $env:LANGCHAIN_API_KEY` (PowerShell) or
-> `echo $LANGCHAIN_API_KEY` (bash/zsh).
+Verify the key was loaded:
 
-### 4. Run the REPL
+**macOS / Linux:**
+```bash
+echo $LANGCHAIN_API_KEY
+```
+
+**Windows (PowerShell):**
+```powershell
+echo $env:LANGCHAIN_API_KEY
+```
+
+You should see your key printed. If you see a blank line, the load step did
+not run in this terminal.
+
+### 5. Run the REPL
 
 ```bash
 uv run python -m mathagent
