@@ -5,7 +5,7 @@ description = "A reference LangChain agent that does math without using an LLM. 
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 license = { text = "MIT" }
-authors = [{ name = "Guillem Poy", email = "guillem.poy@galtea.ai" }]
+authors = [{ name = "Guillem Poy", email = "guplem@gmail.com" }]
 
 dependencies = [
     # LangChain ecosystem. We pin minor floors but allow patch upgrades.
