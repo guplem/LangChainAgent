@@ -21,12 +21,17 @@ Introduce a single function `tracing.get_callbacks()` that reads the
 `TRACING_BACKEND` env var and returns the list of callback handlers to pass
 to every `.invoke()` call:
 
-- `langsmith` (default): returns `[]`. LangChain auto-registers the LangSmith
-  tracer from `LANGCHAIN_TRACING_V2`.
-- `langfuse`: returns `[langfuse.langchain.CallbackHandler()]`. (The legacy
+- `both` (default): returns `[langfuse.langchain.CallbackHandler()]` and
+  relies on the implicit LangSmith tracer registered from
+  `LANGCHAIN_TRACING_V2`. The reference project's purpose is comparing
+  backends, so showing both by default is the most useful first run. Missing
+  keys for either backend gracefully disable that backend.
+- `langsmith`: returns `[]`. LangChain auto-registers the LangSmith tracer
+  from `LANGCHAIN_TRACING_V2`. Use this to avoid the one-line LangFuse
+  "client disabled" startup warning when you have no LangFuse keys.
+- `langfuse`: returns `[langfuse.langchain.CallbackHandler()]`. To silence
+  LangSmith too, also unset `LANGCHAIN_TRACING_V2`. (The legacy
   `langfuse.callback` import path was removed in LangFuse v3.)
-- `both`: returns the LangFuse handler on top of LangSmith. Useful for
-  comparing the two during migration.
 - `none`: returns `[]` and the caller is expected to also unset
   `LANGCHAIN_TRACING_V2`.
 

@@ -98,9 +98,9 @@ and `src/mathagent/tracing.py` for the wiring.
 
 | Value | What it does |
 |---|---|
-| `langsmith` (default) | Relies on `LANGCHAIN_TRACING_V2=true`. LangChain auto-registers its tracer. |
-| `langfuse` | Adds the LangFuse callback handler. Reads `LANGFUSE_*` env vars. |
-| `both` | LangFuse on top of LangSmith. Useful when migrating. |
+| `both` (default) | Both backends. LangChain auto-registers LangSmith from env vars; the LangFuse handler is attached too. Missing keys for either backend gracefully disable that one. |
+| `langsmith` | LangSmith only. No LangFuse handler, no startup warning when you have no LangFuse keys. |
+| `langfuse` | LangFuse only. Also unset `LANGCHAIN_TRACING_V2` to silence LangSmith. |
 | `none` | No callbacks. Also unset `LANGCHAIN_TRACING_V2` for full silence. |
 
 ### Flushing on exit
