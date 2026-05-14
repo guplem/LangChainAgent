@@ -28,8 +28,8 @@ def _ask_mode() -> str:
     print("MathAgent REPL")
     print("Three modes, three LangChain shapes that share the same tools:")
     print("  chain  -> RunnableLambda composition. Deterministic, no loop.")
-    print("  agent  -> AgentExecutor + tool-calling chat model. Legacy agent loop.")
-    print("  graph  -> LangGraph create_react_agent. Modern agent path.")
+    print("  agent  -> langchain.agents.create_agent. Modern agent path.")
+    print("  graph  -> Hand-built LangGraph state machine. Educational.")
     print()
     while True:
         choice = input("mode> ").strip().lower()

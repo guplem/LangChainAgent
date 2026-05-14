@@ -3,8 +3,8 @@
 The package exposes three "router" implementations that share the same tools:
 
   - build_chain  : RunnableLambda composition (deterministic; "chain" pattern).
-  - build_agent  : AgentExecutor + custom rule-based chat model ("agent" pattern, legacy).
-  - build_graph  : LangGraph create_react_agent ("graph" pattern, modern).
+  - build_agent  : langchain.agents.create_agent (modern agent path).
+  - build_graph  : Hand-built LangGraph StateGraph (educational graph path).
 
 All three produce LangSmith traces so you can compare their shapes.
 """
