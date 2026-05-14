@@ -15,7 +15,7 @@ from langchain_core.runnables import Runnable
 from mathagent.agent import build_agent
 from mathagent.chain import build_chain
 from mathagent.graph import build_graph
-from mathagent.tracing import get_callbacks
+from mathagent.tracing import flush_callbacks, get_callbacks
 
 _MODES: dict[str, Callable[[], Runnable[Any, Any]]] = {
     "chain": build_chain,
@@ -60,19 +60,26 @@ def run() -> None:
     runnable = _MODES[mode]()
     callbacks = list(get_callbacks())
     print(f"\nReady ({mode} mode). Ask a math question. Type 'quit' to exit.\n")
-    while True:
-        try:
-            text = input("> ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print()
-            return
-        if not text:
-            continue
-        if text.lower() in {"quit", "exit"}:
-            return
-        try:
-            payload = _prepare_input(mode, text)
-            result = runnable.invoke(payload, config={"callbacks": callbacks})
-            print(_format_output(mode, result))
-        except Exception as e:
-            print(f"Error: {type(e).__name__}: {e}")
+    # The try/finally guarantees flush_callbacks() runs on every exit path
+    # (normal quit, Ctrl-C, exception). Without it, the LangFuse background
+    # batcher can drop the last span when the REPL exits faster than its
+    # network round-trip. LangSmith auto-flushes via its own atexit hook.
+    try:
+        while True:
+            try:
+                text = input("> ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                return
+            if not text:
+                continue
+            if text.lower() in {"quit", "exit"}:
+                return
+            try:
+                payload = _prepare_input(mode, text)
+                result = runnable.invoke(payload, config={"callbacks": callbacks})
+                print(_format_output(mode, result))
+            except Exception as e:
+                print(f"Error: {type(e).__name__}: {e}")
+    finally:
+        flush_callbacks(callbacks)

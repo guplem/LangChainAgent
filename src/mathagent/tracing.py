@@ -64,3 +64,28 @@ def _build_langfuse_handler() -> BaseCallbackHandler:
             "but it is not installed. Run: uv sync"
         ) from e
     return CallbackHandler()
+
+
+def flush_callbacks(callbacks: Sequence[BaseCallbackHandler]) -> None:
+    """Ship any buffered trace events before the process exits.
+
+    LangFuse v3+ buffers events in memory and ships them in batches on a
+    background thread. If the process exits before that thread has shipped
+    the last batch, the tail of the run is lost. `Langfuse.flush()` forces
+    the buffer to be drained and waits for the network round-trip to finish.
+
+    LangSmith's client auto-flushes via its own `atexit` hook, so we only
+    flush LangFuse here. The function is a no-op when the callback list
+    does not contain a LangFuse handler (e.g. langsmith / none modes).
+
+    Call this once at REPL exit, script end, or container shutdown.
+    """
+    if not callbacks:
+        return
+    try:
+        from langfuse import get_client
+        from langfuse.langchain import CallbackHandler as LangFuseHandler
+    except ImportError:
+        return
+    if any(isinstance(cb, LangFuseHandler) for cb in callbacks):
+        get_client().flush()

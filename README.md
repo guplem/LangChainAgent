@@ -91,6 +91,16 @@ and `src/mathagent/tracing.py` for the wiring.
 | `both` | LangFuse on top of LangSmith. Useful when migrating. |
 | `none` | No callbacks. Also unset `LANGCHAIN_TRACING_V2` for full silence. |
 
+### Flushing on exit
+
+LangFuse v3+ buffers trace events in memory and ships them in batches on a
+background thread. A short-lived process (REPL, script, CI job) can exit
+before that thread has sent the last batch, which drops the tail of the
+run. The REPL calls `tracing.flush_callbacks(callbacks)` in a `finally`
+block so every exit path flushes once. If you import the library and call
+the runnables yourself, call `flush_callbacks` on shutdown too. It is a
+no-op for `langsmith` / `none` (LangSmith auto-flushes via `atexit`).
+
 ## Quick start
 
 ### 1. Install uv (one-time per machine)

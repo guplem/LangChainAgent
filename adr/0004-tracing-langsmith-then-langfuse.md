@@ -33,6 +33,14 @@ to every `.invoke()` call:
 The REPL passes `get_callbacks()` to every `.invoke(..., config={"callbacks": ...})`
 call. The function is the single point of change when the backend changes.
 
+A companion helper `tracing.flush_callbacks(callbacks)` drains the LangFuse
+batch buffer before the process exits. LangFuse v3+ buffers events on a
+background thread; a short-lived run (REPL, script, CI job) can exit before
+that thread has shipped the last batch. The REPL calls `flush_callbacks` in
+a `finally` block so every exit path (normal quit, Ctrl-C, exception) flushes
+once. LangSmith's client auto-flushes via its own `atexit` hook, so the
+helper is a no-op when the callback list does not contain a LangFuse handler.
+
 ## Consequences
 
 - LangFuse SDK is a runtime dependency (`pyproject.toml`) so the import in
@@ -43,3 +51,7 @@ call. The function is the single point of change when the backend changes.
   in the `TRACING_BACKEND` enum.
 - Tests disable tracing globally (`conftest.py`) so unit tests never reach
   out to an external service.
+- Any new caller of `get_callbacks()` that is not the REPL (a future CLI, a
+  batch script, a notebook) must also call `flush_callbacks()` on shutdown.
+  The function is a no-op when no LangFuse handler is present, so calling it
+  unconditionally is always safe.
